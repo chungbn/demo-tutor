@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Tutor - Lớp Học Thông Minh</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        #whiteboard {
+            min-height: 400px;
+            background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen font-sans text-slate-900">
+
+    <nav class="bg-blue-600 p-4 text-white shadow-lg mb-8">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold flex items-center gap-2">
+                <span>👨‍🏫</span> AI Tutor - Trợ lý giảng dạy
+            </h1>
+            <span class="bg-blue-500 px-3 py-1 rounded-full text-sm">Chương trình: Toán lớp 9</span>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <div class="md:col-span-2">
+            <div id="whiteboard" class="glass-card rounded-2xl shadow-xl p-8 border-t-4 border-blue-500 relative overflow-hidden">
+                <div class="absolute top-4 right-4 text-slate-400 text-xs font-mono uppercase tracking-widest">Digital Board</div>
+                
+                <div id="board-content" class="prose prose-slate max-w-none">
+                    <h2 class="text-2xl font-bold text-blue-800 mb-4">Nội dung bài học sẽ hiện ở đây...</h2>
+                    <p class="text-slate-600 italic">Hãy nhấn nút gọi điện và bắt đầu đặt câu hỏi cho thầy giáo.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="space-y-6">
+            <div class="glass-card rounded-2xl p-6 shadow-lg">
+                <h3 class="font-semibold mb-4 flex items-center gap-2">
+                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                    Trạng thái hệ thống
+                </h3>
+                <div class="space-y-4 text-sm">
+                    <div class="flex justify-between p-2 bg-slate-100 rounded">
+                        <span>Kết nối:</span>
+                        <span class="text-green-600 font-medium">Sẵn sàng</span>
+                    </div>
+                    <div id="ai-status" class="p-4 bg-blue-50 border border-blue-100 rounded-lg text-blue-700 italic">
+                        "Đang đợi bạn kết nối âm thanh..."
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-6 text-white shadow-lg">
+                <h3 class="font-semibold mb-2 italic">Hướng dẫn:</h3>
+                <ul class="text-sm space-y-2 opacity-90">
+                    <li>• Nhấn biểu tượng tròn ở góc màn hình.</li>
+                    <li>• Cho phép Micro nếu trình duyệt hỏi.</li>
+                    <li>• Nói: "Chào thầy, giảng cho em bài 1".</li>
+                </ul>
+            </div>
+        </div>
+    </main>
+
+    <script>
+      const assistantID = "7d17a5b8-d627-4224-9ef9-0b404de6edd2"; 
+      const apiKey = "99789d88-4ebb-44ee-883c-f616591603f1"; 
+
+      (function (d, s, id) {
+        var js, vjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) return;
+        js = d.createElement(s); js.id = id;
+        js.src = "https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js";
+        vjs.parentNode.insertBefore(js, vjs);
+
+        js.onload = () => {
+          const vapiInstance = window.vapiSDK.run({
+            apiKey: apiKey,
+            assistant: assistantID,
+            config: {
+                display: {
+                    position: "bottom-right",
+                    title: "Bắt đầu bài học",
+                    color: "#2563eb"
+                }
+            }
+          });
+
+          // LẮNG NGHE SỰ KIỆN TỪ AI ĐỂ CẬP NHẬT BẢNG
+          vapiInstance.on('speech-start', () => {
+            document.getElementById('ai-status').innerText = "Thầy giáo đang nói...";
+          });
+
+          vapiInstance.on('speech-end', () => {
+            document.getElementById('ai-status').innerText = "Đang lắng nghe bạn...";
+          });
+
+          vapiInstance.on('message', (message) => {
+            if (message.type === 'transcript' && message.role === 'assistant') {
+                // Cập nhật nội dung lên bảng viết
+                const board = document.getElementById('board-content');
+                board.innerHTML = `
+                    <div class="animate-fade-in">
+                        <p class='text-lg leading-relaxed text-slate-700'>${message.transcript}</p>
+                    </div>
+                `;
+                // Tự động render lại công thức toán học nếu có
+                if (window.MathJax) MathJax.typeset();
+            }
+          });
+        };
+      })(document, "script", "vapi-sdk");
+    </script>
+</body>
+</html>
