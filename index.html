@@ -78,11 +78,35 @@
                     assistant: ASSISTANT_ID,
                     config: { display: { position: "bottom-left" } }
                 });
-
                 vapiInstance.on('message', (message) => {
-                    // Lắng nghe Transcript từ AI
+                    // 1. Luôn hiển thị lời nói bình thường vào Chat
                     if (message.type === 'transcript' && message.role === 'assistant') {
-                        processAIResponse(message.transcript);
+                        const chatBox = document.getElementById('chat-box');
+                        const msgDiv = document.createElement('div');
+                        msgDiv.className = "bg-blue-50 p-4 rounded-2xl text-slate-700 text-sm self-start max-w-[90%] shadow-sm mb-2";
+                        msgDiv.innerHTML = `<b class="text-blue-600">Thầy:</b> ${message.transcript}`;
+                        chatBox.appendChild(msgDiv);
+                        chatBox.scrollTop = chatBox.scrollHeight;
+                    }
+
+                    // 2. CHÍNH LÀ ĐÂY: Lắng nghe khi AI gọi hàm viết bảng
+                    if (message.type === 'tool-calls') {
+                        const toolCall = message.toolCalls[0];
+                        if (toolCall.function.name === 'update_whiteboard') {
+                            const args = JSON.parse(toolCall.function.arguments);
+                            const board = document.getElementById('whiteboard-content');
+                            
+                            if (board.innerText.includes("Đang đợi")) board.innerHTML = "";
+
+                            const formulaDiv = document.createElement('div');
+                            formulaDiv.className = "p-6 bg-white/5 rounded-2xl border border-white/10 text-center animate-in fade-in zoom-in duration-700";
+                            formulaDiv.innerHTML = args.content; // Nội dung AI gửi qua hàm
+                            
+                            board.appendChild(formulaDiv);
+                            
+                            if (window.MathJax) MathJax.typesetPromise();
+                            board.parentElement.scrollTop = board.parentElement.scrollHeight;
+                        }
                     }
                 });
 
