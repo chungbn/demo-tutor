@@ -8,45 +8,54 @@
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+        body { font-family: 'Inter', sans-serif; }
         .chalkboard {
             background-color: #1e3a3a;
             background-image: radial-gradient(#2d5a5a 1px, transparent 1px);
             background-size: 25px 25px;
             color: #f8fafc;
-            font-family: 'Courier New', Courier, monospace;
+            box-shadow: inset 0 0 100px rgba(0,0,0,0.5);
         }
-        .chat-container { height: calc(100vh - 160px); }
-        .board-container { height: calc(100vh - 160px); }
+        .chat-container { height: calc(100vh - 180px); }
+        .board-container { height: calc(100vh - 180px); }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
-<body class="bg-gray-100 overflow-hidden">
+<body class="bg-slate-50 overflow-hidden">
 
     <header class="bg-white border-b p-4 flex justify-between items-center shadow-sm">
-        <h1 class="text-xl font-bold text-blue-800">🏫 Lớp Học AI 4.0</h1>
-        <div id="status" class="text-xs font-semibold px-3 py-1 rounded-full bg-gray-200 uppercase">Đang đợi kết nối</div>
+        <div class="flex items-center gap-2">
+            <span class="text-2xl">🎓</span>
+            <h1 class="text-xl font-bold text-slate-800">Lớp Học AI Tutor</h1>
+        </div>
+        <div id="status" class="text-[10px] font-bold px-3 py-1 rounded-full bg-slate-200 text-slate-500 uppercase tracking-tighter">Chưa kết nối</div>
     </header>
 
-    <div class="grid grid-cols-12 gap-4 p-4">
+    <div class="grid grid-cols-12 gap-6 p-6">
         
         <div class="col-span-7">
-            <div class="board-container chalkboard rounded-3xl shadow-2xl p-8 overflow-y-auto border-8 border-[#3d2b1f]">
-                <div class="text-center border-b border-gray-600 mb-6 pb-2 opacity-50 text-sm italic">BẢNG GIẢNG BÀI</div>
-                <div id="whiteboard-content" class="text-2xl space-y-6 leading-relaxed">
-                    $$ E = mc^2 $$
+            <div class="board-container chalkboard rounded-[2rem] p-10 overflow-y-auto border-[12px] border-[#3d2b1f] relative custom-scrollbar">
+                <div class="absolute top-4 left-1/2 -translate-x-1/2 opacity-30 text-xs tracking-[0.3em]">GIÁO ÁN ĐIỆN TỬ</div>
+                <div id="whiteboard-content" class="text-3xl space-y-8 mt-4 text-center">
+                    <div class="opacity-40 text-lg italic mt-20">Đang đợi nội dung giảng dạy...</div>
                 </div>
             </div>
         </div>
 
         <div class="col-span-5 flex flex-col gap-4">
-            <div id="chat-box" class="chat-container bg-white rounded-3xl shadow-lg p-6 overflow-y-auto space-y-4">
-                <div class="bg-blue-50 p-4 rounded-2xl text-blue-800 text-sm">
-                    <b>Thầy giáo:</b> Chào em! Em cần thầy giảng phần nào trong chương trình hôm nay?
+            <div id="chat-box" class="chat-container bg-white rounded-[2rem] shadow-xl p-6 overflow-y-auto flex flex-col gap-4 border border-slate-100 custom-scrollbar">
+                <div class="bg-slate-100 p-4 rounded-2xl text-slate-600 text-sm italic self-start max-w-[90%]">
+                    <b>Hệ thống:</b> Chào em, hãy nhấn nút Micro hoặc gõ text để bắt đầu học nhé!
                 </div>
             </div>
 
-            <div class="flex gap-2">
-                <input type="text" id="chat-input" class="flex-1 p-4 rounded-2xl border-none shadow-md outline-none" placeholder="Gõ câu hỏi...">
-                <button id="send-btn" class="bg-blue-600 text-white px-6 rounded-2xl font-bold shadow-md hover:bg-blue-700">Gửi</button>
+            <div class="flex gap-2 bg-white p-2 rounded-2xl shadow-lg border border-slate-100">
+                <input type="text" id="chat-input" class="flex-1 p-3 px-5 outline-none text-slate-700" placeholder="Hỏi thầy điều gì đó...">
+                <button id="send-btn" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 active:scale-95 transition-all">
+                    Gửi
+                </button>
             </div>
         </div>
     </div>
@@ -71,12 +80,14 @@
                 });
 
                 vapiInstance.on('message', (message) => {
+                    // Lắng nghe Transcript từ AI
                     if (message.type === 'transcript' && message.role === 'assistant') {
                         processAIResponse(message.transcript);
                     }
                 });
 
                 vapiInstance.on('call-start', () => updateStatus('Đang giảng bài', 'bg-green-500 text-white'));
+                vapiInstance.on('call-end', () => updateStatus('Sẵn sàng', 'bg-slate-200 text-slate-500'));
             };
         })(document, "script", "vapi-sdk");
 
@@ -84,41 +95,57 @@
             const chatBox = document.getElementById('chat-box');
             const board = document.getElementById('whiteboard-content');
 
-            // 1. Hiển thị toàn bộ lời nói vào Chat
+            // 1. Luôn hiển thị text vào hộp Chat
             const msgDiv = document.createElement('div');
-            msgDiv.className = "bg-gray-100 p-3 rounded-2xl text-gray-700 text-sm self-start";
-            msgDiv.innerHTML = `<b>Thầy:</b> ${text}`;
+            msgDiv.className = "bg-blue-50 p-4 rounded-2xl text-slate-700 text-sm self-start max-w-[90%] shadow-sm border border-blue-100";
+            msgDiv.innerHTML = `<b class="text-blue-600">Thầy:</b> ${text}`;
             chatBox.appendChild(msgDiv);
             chatBox.scrollTop = chatBox.scrollHeight;
 
-            // 2. Tách Công thức Toán học ra Bảng (Tìm nội dung giữa các dấu $)
+            // 2. Tách công thức toán học (giữa dấu $ hoặc $$) để đẩy lên Bảng
             const mathRegex = /(\$\$[\s\S]*?\$\$|\$[\s\S]*?\$)/g;
             const matches = text.match(mathRegex);
 
             if (matches) {
+                // Xóa dòng thông báo mặc định nếu có
+                if (board.innerText.includes("Đang đợi")) board.innerHTML = "";
+                
                 matches.forEach(formula => {
                     const formulaDiv = document.createElement('div');
-                    formulaDiv.className = "p-4 bg-white/5 rounded-lg border border-white/10 text-center animate-pulse";
+                    formulaDiv.className = "p-4 bg-white/10 rounded-xl border border-white/5 text-center transition-all animate-in fade-in zoom-in duration-500";
                     formulaDiv.innerHTML = formula;
                     board.appendChild(formulaDiv);
                 });
                 
-                // Render lại MathJax
+                // Kích hoạt MathJax render lại công thức
                 if (window.MathJax) MathJax.typesetPromise();
                 board.parentElement.scrollTop = board.parentElement.scrollHeight;
             }
         }
 
-        // Gửi tin nhắn
+        // Xử lý gửi tin nhắn văn bản
         const inputField = document.getElementById('chat-input');
         const sendBtn = document.getElementById('send-btn');
 
         function sendMessage() {
             const text = inputField.value.trim();
             if (text && vapiInstance) {
-                vapiInstance.say(text, true);
+                // SỬ DỤNG HÀM SEND VỚI TYPE 'ADD-MESSAGE'
+                vapiInstance.send({
+                    type: "add-message",
+                    message: {
+                        role: "user",
+                        content: text
+                    }
+                });
+
+                // Hiển thị nội dung người dùng vừa gõ vào Chat
                 const chatBox = document.getElementById('chat-box');
-                chatBox.innerHTML += `<div class="bg-blue-600 p-3 rounded-2xl text-white text-sm self-end ml-auto max-w-[80%]">${text}</div>`;
+                const userDiv = document.createElement('div');
+                userDiv.className = "bg-blue-600 p-4 rounded-2xl text-white text-sm self-end max-w-[90%] shadow-md";
+                userDiv.innerHTML = text;
+                chatBox.appendChild(userDiv);
+                
                 inputField.value = '';
                 chatBox.scrollTop = chatBox.scrollHeight;
             }
@@ -130,7 +157,7 @@
         function updateStatus(txt, cls) {
             const s = document.getElementById('status');
             s.innerText = txt;
-            s.className = `text-xs font-semibold px-3 py-1 rounded-full ${cls}`;
+            s.className = `text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-tighter ${cls}`;
         }
     </script>
 </body>
