@@ -3,108 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Tutor Pro - Học Tập Đa Phương Thức</title>
+    <title>AI Tutor - Smart Classroom</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .whiteboard-bg {
-            background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
-            background-size: 20px 20px;
+        .chalkboard {
+            background-color: #1e3a3a;
+            background-image: radial-gradient(#2d5a5a 1px, transparent 1px);
+            background-size: 25px 25px;
+            color: #f8fafc;
+            font-family: 'Courier New', Courier, monospace;
         }
-        .glass {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(226, 232, 240, 0.8);
-        }
-        #board-content {
-            scroll-behavior: smooth;
-        }
-        /* Hiệu ứng mờ dần khi tin nhắn mới hiện ra */
-        .fade-in { animation: fadeIn 0.5s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .chat-container { height: calc(100vh - 160px); }
+        .board-container { height: calc(100vh - 160px); }
     </style>
 </head>
-<body class="bg-slate-100 min-h-screen">
+<body class="bg-gray-100 overflow-hidden">
 
-    <header class="bg-blue-700 text-white shadow-md p-4 sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="bg-white p-2 rounded-lg text-2xl">👨‍🏫</div>
-                <div>
-                    <h1 class="font-bold text-lg leading-none">AI TUTOR PRO</h1>
-                    <p class="text-xs text-blue-200 mt-1">Hệ thống giảng dạy tương tác thời gian thực</p>
-                </div>
-            </div>
-            <div id="connection-status" class="flex items-center gap-2 bg-blue-800 px-3 py-1.5 rounded-full text-xs font-medium">
-                <span class="w-2 h-2 bg-slate-400 rounded-full" id="status-dot"></span>
-                <span id="status-text">Đang khởi tạo...</span>
-            </div>
-        </div>
+    <header class="bg-white border-b p-4 flex justify-between items-center shadow-sm">
+        <h1 class="text-xl font-bold text-blue-800">🏫 Lớp Học AI 4.0</h1>
+        <div id="status" class="text-xs font-semibold px-3 py-1 rounded-full bg-gray-200 uppercase">Đang đợi kết nối</div>
     </header>
 
-    <main class="max-w-6xl mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-12 gap-4 p-4">
         
-        <div class="lg:col-span-2 flex flex-col gap-4">
-            <div class="glass whiteboard-bg rounded-3xl shadow-xl flex-1 flex flex-col min-h-[500px] border-b-4 border-blue-600">
-                <div class="p-4 border-b flex justify-between items-center bg-white/50 rounded-t-3xl">
-                    <span class="text-xs font-bold text-slate-400 tracking-widest uppercase">Bảng Viết Điện Tử</span>
-                    <button onclick="document.getElementById('board-content').innerHTML=''" class="text-xs text-slate-400 hover:text-red-500 transition">Xóa bảng</button>
+        <div class="col-span-7">
+            <div class="board-container chalkboard rounded-3xl shadow-2xl p-8 overflow-y-auto border-8 border-[#3d2b1f]">
+                <div class="text-center border-b border-gray-600 mb-6 pb-2 opacity-50 text-sm italic">BẢNG GIẢNG BÀI</div>
+                <div id="whiteboard-content" class="text-2xl space-y-6 leading-relaxed">
+                    $$ E = mc^2 $$
                 </div>
-                
-                <div id="board-content" class="p-8 overflow-y-auto max-h-[500px] space-y-4">
-                    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
-                        <h2 class="font-bold text-blue-800">Chào mừng em đến với tiết học!</h2>
-                        <p class="text-slate-600 mt-1">Thầy đã sẵn sàng. Em có thể <b>nói trực tiếp</b> hoặc <b>nhập văn bản</b> để đặt câu hỏi nhé.</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="glass rounded-2xl p-2 shadow-lg flex gap-2">
-                <input type="text" id="chat-input" 
-                       class="flex-1 p-4 rounded-xl border-none bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none text-slate-700" 
-                       placeholder="Nhập câu hỏi tại đây (ví dụ: Giải thích định luật Newton)...">
-                <button id="send-btn" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 hover:shadow-lg active:scale-95 transition-all">
-                    Gửi
-                </button>
             </div>
         </div>
 
-        <div class="flex flex-col gap-6">
-            <div class="glass rounded-3xl p-6 shadow-md text-center">
-                <h3 class="font-bold text-slate-700 mb-4">Điều khiển Giọng nói</h3>
-                <div id="vapi-widget-container" class="py-4">
-                    <p class="text-sm text-slate-500 mb-4">Nhấn vào biểu tượng micro ở góc màn hình để bắt đầu đàm thoại.</p>
-                </div>
-                <div class="p-4 bg-orange-50 border border-orange-100 rounded-2xl text-orange-700 text-sm italic" id="ai-talking-hint">
-                    "Thầy đang đợi em đặt câu hỏi..."
+        <div class="col-span-5 flex flex-col gap-4">
+            <div id="chat-box" class="chat-container bg-white rounded-3xl shadow-lg p-6 overflow-y-auto space-y-4">
+                <div class="bg-blue-50 p-4 rounded-2xl text-blue-800 text-sm">
+                    <b>Thầy giáo:</b> Chào em! Em cần thầy giảng phần nào trong chương trình hôm nay?
                 </div>
             </div>
 
-            <div class="bg-white rounded-3xl p-6 shadow-md border border-slate-200">
-                <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                    <span>💡</span> Mẹo học tập
-                </h3>
-                <ul class="text-sm text-slate-600 space-y-3">
-                    <li class="flex gap-2">
-                        <span class="text-blue-500 font-bold">1.</span>
-                        Nếu thầy giáo nói nhanh quá, em hãy yêu cầu: "Thầy ơi nói chậm lại".
-                    </li>
-                    <li class="flex gap-2">
-                        <span class="text-blue-500 font-bold">2.</span>
-                        Thầy có thể viết công thức Toán, Lý, Hóa trực tiếp lên bảng.
-                    </li>
-                    <li class="flex gap-2">
-                        <span class="text-blue-500 font-bold">3.</span>
-                        Mọi nội dung thầy nói sẽ được tự động ghi lại trên bảng.
-                    </li>
-                </ul>
+            <div class="flex gap-2">
+                <input type="text" id="chat-input" class="flex-1 p-4 rounded-2xl border-none shadow-md outline-none" placeholder="Gõ câu hỏi...">
+                <button id="send-btn" class="bg-blue-600 text-white px-6 rounded-2xl font-bold shadow-md hover:bg-blue-700">Gửi</button>
             </div>
         </div>
-    </main>
+    </div>
 
     <script>
         const ASSISTANT_ID = "7d17a5b8-d627-4224-9ef9-0b404de6edd2"; 
@@ -122,94 +67,70 @@
                 vapiInstance = window.vapiSDK.run({
                     apiKey: PUBLIC_KEY,
                     assistant: ASSISTANT_ID,
-                    config: {
-                        display: {
-                            position: "bottom-right",
-                            title: "Trò chuyện với thầy",
-                            color: "#1d4ed8"
-                        }
-                    }
-                });
-
-                setConnectionStatus('ready', 'Hệ thống sẵn sàng');
-
-                // Lắng nghe sự kiện
-                vapiInstance.on('speech-start', () => {
-                    document.getElementById('ai-talking-hint').innerText = "Thầy giáo đang giải thích...";
-                    document.getElementById('status-dot').classList.add('animate-pulse', 'bg-green-500');
-                });
-
-                vapiInstance.on('speech-end', () => {
-                    document.getElementById('ai-talking-hint').innerText = "Đang lắng nghe em...";
-                    document.getElementById('status-dot').classList.remove('animate-pulse');
+                    config: { display: { position: "bottom-left" } }
                 });
 
                 vapiInstance.on('message', (message) => {
-                    // Cập nhật nội dung bảng từ lời nói AI
                     if (message.type === 'transcript' && message.role === 'assistant') {
-                        updateBoard(message.transcript, 'ai');
+                        processAIResponse(message.transcript);
                     }
                 });
-                
-                vapiInstance.on('call-start', () => setConnectionStatus('active', 'Đang giảng bài'));
-                vapiInstance.on('call-end', () => setConnectionStatus('ready', 'Đã kết thúc buổi học'));
+
+                vapiInstance.on('call-start', () => updateStatus('Đang giảng bài', 'bg-green-500 text-white'));
             };
         })(document, "script", "vapi-sdk");
 
-        // Hàm cập nhật bảng viết
-        function updateBoard(text, sender) {
-            const board = document.getElementById('board-content');
-            if (sender === 'ai') {
-                board.innerHTML = `
-                    <div class="fade-in p-5 bg-white rounded-2xl shadow-sm border border-slate-100">
-                        <p class="text-slate-800 leading-relaxed text-lg">${text}</p>
-                    </div>
-                `;
-            } else {
-                board.innerHTML += `
-                    <div class="fade-in flex justify-end">
-                        <div class="bg-blue-600 text-white p-3 rounded-2xl rounded-tr-none max-w-[80%] shadow-md">
-                            <p class="text-sm font-bold opacity-75 mb-1">Em đặt câu hỏi:</p>
-                            <p>${text}</p>
-                        </div>
-                    </div>
-                `;
+        function processAIResponse(text) {
+            const chatBox = document.getElementById('chat-box');
+            const board = document.getElementById('whiteboard-content');
+
+            // 1. Hiển thị toàn bộ lời nói vào Chat
+            const msgDiv = document.createElement('div');
+            msgDiv.className = "bg-gray-100 p-3 rounded-2xl text-gray-700 text-sm self-start";
+            msgDiv.innerHTML = `<b>Thầy:</b> ${text}`;
+            chatBox.appendChild(msgDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // 2. Tách Công thức Toán học ra Bảng (Tìm nội dung giữa các dấu $)
+            const mathRegex = /(\$\$[\s\S]*?\$\$|\$[\s\S]*?\$)/g;
+            const matches = text.match(mathRegex);
+
+            if (matches) {
+                matches.forEach(formula => {
+                    const formulaDiv = document.createElement('div');
+                    formulaDiv.className = "p-4 bg-white/5 rounded-lg border border-white/10 text-center animate-pulse";
+                    formulaDiv.innerHTML = formula;
+                    board.appendChild(formulaDiv);
+                });
+                
+                // Render lại MathJax
+                if (window.MathJax) MathJax.typesetPromise();
+                board.parentElement.scrollTop = board.parentElement.scrollHeight;
             }
-            
-            // Render lại MathJax cho công thức toán
-            if (window.MathJax) MathJax.typesetPromise();
-            
-            // Tự động cuộn xuống cuối
-            board.scrollTop = board.scrollHeight;
         }
 
-        // Hàm xử lý gửi Text Chat
+        // Gửi tin nhắn
         const inputField = document.getElementById('chat-input');
         const sendBtn = document.getElementById('send-btn');
 
-        function handleSendMessage() {
+        function sendMessage() {
             const text = inputField.value.trim();
             if (text && vapiInstance) {
-                // Gửi nội dung text tới AI
-                vapiInstance.send({
-                    type: "add-message",
-                    message: { role: "user", content: text }
-                });
-                
-                updateBoard(text, 'user');
+                vapiInstance.say(text, true);
+                const chatBox = document.getElementById('chat-box');
+                chatBox.innerHTML += `<div class="bg-blue-600 p-3 rounded-2xl text-white text-sm self-end ml-auto max-w-[80%]">${text}</div>`;
                 inputField.value = '';
+                chatBox.scrollTop = chatBox.scrollHeight;
             }
         }
 
-        sendBtn.addEventListener('click', handleSendMessage);
-        inputField.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSendMessage(); });
+        sendBtn.addEventListener('click', sendMessage);
+        inputField.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
 
-        // Hàm cập nhật trạng thái kết nối
-        function setConnectionStatus(type, text) {
-            const dot = document.getElementById('status-dot');
-            const txt = document.getElementById('status-text');
-            txt.innerText = text;
-            dot.className = "w-2 h-2 rounded-full " + (type === 'active' ? 'bg-green-500' : 'bg-blue-400');
+        function updateStatus(txt, cls) {
+            const s = document.getElementById('status');
+            s.innerText = txt;
+            s.className = `text-xs font-semibold px-3 py-1 rounded-full ${cls}`;
         }
     </script>
 </body>
