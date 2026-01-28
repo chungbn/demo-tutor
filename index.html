@@ -95,32 +95,38 @@
             const chatBox = document.getElementById('chat-box');
             const board = document.getElementById('whiteboard-content');
 
-            // 1. Luôn hiển thị text vào hộp Chat
-            const msgDiv = document.createElement('div');
-            msgDiv.className = "bg-blue-50 p-4 rounded-2xl text-slate-700 text-sm self-start max-w-[90%] shadow-sm border border-blue-100";
-            msgDiv.innerHTML = `<b class="text-blue-600">Thầy:</b> ${text}`;
-            chatBox.appendChild(msgDiv);
-            chatBox.scrollTop = chatBox.scrollHeight;
+            // 1. Hiển thị lời nói của AI vào Chat (loại bỏ các thẻ tag để chat trông sạch sẽ)
+            const cleanTextForChat = text.replace(/\[BOARD\][\s\S]*?\[\/BOARD\]/g, '').trim();
+            if (cleanTextForChat) {
+                const msgDiv = document.createElement('div');
+                msgDiv.className = "bg-blue-50 p-4 rounded-2xl text-slate-700 text-sm self-start max-w-[90%] shadow-sm border border-blue-100 mb-2";
+                msgDiv.innerHTML = `<b class="text-blue-600">Thầy:</b> ${cleanTextForChat}`;
+                chatBox.appendChild(msgDiv);
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
 
-            // 2. Tách công thức toán học (giữa dấu $ hoặc $$) để đẩy lên Bảng
-            const mathRegex = /(\$\$[\s\S]*?\$\$|\$[\s\S]*?\$)/g;
-            const matches = text.match(mathRegex);
-
-            if (matches) {
-                // Xóa dòng thông báo mặc định nếu có
+            // 2. Tách nội dung dành riêng cho Bảng
+            // Hỗ trợ cả thẻ [BOARD] và công thức Toán $$
+            const boardRegex = /\[BOARD\]([\s\S]*?)\[\/BOARD\]|\$\$([\s\S]*?)\$\$|\$([\s\S]*?)\$/g;
+            let match;
+            
+            while ((match = boardRegex.exec(text)) !== null) {
                 if (board.innerText.includes("Đang đợi")) board.innerHTML = "";
                 
-                matches.forEach(formula => {
-                    const formulaDiv = document.createElement('div');
-                    formulaDiv.className = "p-4 bg-white/10 rounded-xl border border-white/5 text-center transition-all animate-in fade-in zoom-in duration-500";
-                    formulaDiv.innerHTML = formula;
-                    board.appendChild(formulaDiv);
-                });
+                // Lấy nội dung bên trong cặp thẻ hoặc dấu $
+                const content = match[1] || match[2] || match[3];
                 
-                // Kích hoạt MathJax render lại công thức
-                if (window.MathJax) MathJax.typesetPromise();
-                board.parentElement.scrollTop = board.parentElement.scrollHeight;
+                const formulaDiv = document.createElement('div');
+                formulaDiv.className = "p-6 bg-white/5 rounded-2xl border border-white/10 text-center shadow-inner animate-in fade-in slide-in-from-bottom-4 duration-700";
+                
+                // Nếu là công thức toán thì bọc lại bằng $$ để MathJax hiểu
+                formulaDiv.innerHTML = (match[2] || match[3]) ? `$$ ${content} $$` : content;
+                
+                board.appendChild(formulaDiv);
             }
+            
+            if (window.MathJax) MathJax.typesetPromise();
+            board.parentElement.scrollTop = board.parentElement.scrollHeight;
         }
 
         // Xử lý gửi tin nhắn văn bản
